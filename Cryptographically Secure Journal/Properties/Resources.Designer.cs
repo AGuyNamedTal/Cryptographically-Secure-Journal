@@ -59,5 +59,23 @@ namespace CryptographicallySecureJournal.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to What was your childhood nickname?
+        ///In what city did you meet your spouse/significant other?
+        ///What is the name of your favorite childhood friend?
+        ///What street did you live on in third grade?
+        ///What is your oldest sibling’s birthday month and year? (e.g., January 1900)
+        ///What is the middle name of your youngest child?
+        ///What is your oldest sibling&apos;s middle name?
+        ///What school did you attend for sixth grade?
+        ///What was your childhood phone number including area code? (e.g., 000-000-0000)
+        ///What is your oldest cousin [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SecurityQuestions {
+            get {
+                return ResourceManager.GetString("SecurityQuestions", resourceCulture);
+            }
+        }
     }
 }

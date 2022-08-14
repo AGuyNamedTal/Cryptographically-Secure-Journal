@@ -1,4 +1,4 @@
-﻿namespace CryptographicallySecureJournal
+﻿namespace CryptographicallySecureJournal.Forms
 {
     partial class StartupForm
     {
@@ -32,12 +32,13 @@
             this.passwordTxtBox = new System.Windows.Forms.TextBox();
             this.continueBtn = new System.Windows.Forms.Button();
             this.securitySettingsLbl = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // connectToDriveBtn
             // 
             this.connectToDriveBtn.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.connectToDriveBtn.Location = new System.Drawing.Point(108, 23);
+            this.connectToDriveBtn.Location = new System.Drawing.Point(111, 30);
             this.connectToDriveBtn.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.connectToDriveBtn.Name = "connectToDriveBtn";
             this.connectToDriveBtn.Size = new System.Drawing.Size(275, 63);
@@ -72,18 +73,26 @@
             this.securitySettingsLbl.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.securitySettingsLbl.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
             this.securitySettingsLbl.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.securitySettingsLbl.Location = new System.Drawing.Point(167, 189);
+            this.securitySettingsLbl.Location = new System.Drawing.Point(166, 189);
             this.securitySettingsLbl.Name = "securitySettingsLbl";
             this.securitySettingsLbl.Size = new System.Drawing.Size(166, 30);
             this.securitySettingsLbl.TabIndex = 4;
             this.securitySettingsLbl.Text = "Security Settings";
             this.securitySettingsLbl.Click += new System.EventHandler(this.SecuritySettingsLblClick);
             // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(1, 240);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(494, 17);
+            this.progressBar.TabIndex = 5;
+            // 
             // StartupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(493, 256);
+            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.securitySettingsLbl);
             this.Controls.Add(this.continueBtn);
             this.Controls.Add(this.passwordTxtBox);
@@ -104,6 +113,7 @@
         private System.Windows.Forms.TextBox passwordTxtBox;
         private System.Windows.Forms.Button continueBtn;
         private System.Windows.Forms.Label securitySettingsLbl;
+        private System.Windows.Forms.ProgressBar progressBar;
     }
 }
 
