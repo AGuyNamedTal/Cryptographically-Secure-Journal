@@ -162,7 +162,9 @@
     <EmbeddedResource Include="Forms\StartupForm.resx">
       <DependentUpon>StartupForm.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="credentials.json" />
+    <None Include="credentials.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
