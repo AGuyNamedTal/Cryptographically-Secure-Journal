@@ -144,12 +144,12 @@ namespace CryptographicallySecureJournal.Forms
         private void DecryptJournal(string pass)
         {
             UpdateProgressBar(0);
-            byte[] passHash = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), Journal.PassSalt);
+            byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), Journal.PassSalt);
             UpdateProgressBar(90);
             byte[] decryptedText;
             try
             {
-                decryptedText = AesEncryption.Decrypt(Journal.EncryptedText, passHash);
+                decryptedText = AesEncryption.Decrypt(Journal.EncryptedText, key);
             }
             catch (Exception exception)
             {
@@ -160,7 +160,7 @@ namespace CryptographicallySecureJournal.Forms
             }
             UpdateProgressBar(100);
             this.SwitchForm(() => new JournalEditorForm(
-                Encoding.UTF8.GetString(decryptedText), passHash, Journal, _driveManager));
+                Encoding.UTF8.GetString(decryptedText), key, Journal, _driveManager));
         }
 
         private void SecuritySettingsLblClick(object sender, EventArgs e)

@@ -33,10 +33,10 @@ namespace CryptographicallySecureJournal
         }
 
         public static EncryptedShare[] CreateSecurityQuestions(Tuple<int, string>[] securityQuestions,
-            byte[] password, Action<int> progressBarUpdater)
+            byte[] key, Action<int> progressBarUpdater)
         {
 
-            byte[][] split = SplitPassword(password);
+            byte[][] split = SplitKey(key);
             byte[][] encryptedBytes = new byte[split.Length][];
             byte[][] salts = new byte[split.Length][];
             for (int i = 0; i < split.Length; i++)
@@ -44,8 +44,8 @@ namespace CryptographicallySecureJournal
                 byte[] message = Encoding.UTF8.GetBytes(securityQuestions[i].Item2);
                 byte[] salt = HashAndSalt.GenerateSalt();
                 salts[i] = salt;
-                byte[] key = HashAndSalt.SecurityAnswer(message, salt);
-                encryptedBytes[i] = AesEncryption.Encrypt(split[i], key);
+                byte[] shareKey = HashAndSalt.SecurityAnswer(message, salt);
+                encryptedBytes[i] = AesEncryption.Encrypt(split[i], shareKey);
                 progressBarUpdater((i + 1) * 100 / split.Length);
             }
             EncryptedShare[] output = new EncryptedShare[split.Length];
@@ -57,7 +57,7 @@ namespace CryptographicallySecureJournal
             return output;
         }
 
-        public static byte[] RecoverPassword(Tuple<int, string>[] securityQuestions, EncryptedShare[] encryptedShares, Action<int> progressBar)
+        public static byte[] RecoverKey(Tuple<int, string>[] securityQuestions, EncryptedShare[] encryptedShares, Action<int> progressBar)
         {
             ExtendedEuclideanAlgorithm<BigInteger> gcd = new ExtendedEuclideanAlgorithm<BigInteger>();
             ShamirsSecretSharing<BigInteger> combine = new ShamirsSecretSharing<BigInteger>(gcd);
@@ -92,14 +92,14 @@ namespace CryptographicallySecureJournal
                 progressBar(90 * shares.Length / currentShareIndex);
             }
 
-            byte[] password = combine.Reconstruction(shares).ToByteArray();
+            byte[] key = combine.Reconstruction(shares).ToByteArray();
 
             progressBar(100);
-            return password;
+            return key;
         }
 
 
-        private static byte[][] SplitPassword(byte[] password)
+        private static byte[][] SplitKey(byte[] key)
         {
             ExtendedEuclideanAlgorithm<BigInteger> gcd = new ExtendedEuclideanAlgorithm<BigInteger>();
             //// Create Shamir's Secret Sharing instance with BigInteger
@@ -109,7 +109,7 @@ namespace CryptographicallySecureJournal
             //// Maximum number of shared secrets: 10
             //// Attention: The password length changes the security level set by the ctor
             Shares<BigInteger> shares = split.MakeShares(MinimumNumberOfQuestions, 4,
-                password, 15);
+                key, 15);
 
             return shares.Select(point => point.Y.ByteRepresentation.ToArray()).ToArray();
         }

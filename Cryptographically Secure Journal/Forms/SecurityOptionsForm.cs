@@ -109,14 +109,14 @@ namespace CryptographicallySecureJournal.Forms
                 byte[] pass;
                 try
                 {
-                    pass = EncryptedShare.RecoverPassword(securityQuestions,
+                    pass = EncryptedShare.RecoverKey(securityQuestions,
                         _journal.EncryptedShares, updateProgress);
 
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"{ex.Message} - can't recover password, possible wrong answers to security" +
-                                    $"questions", "Can't Recover Password", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"{ex.Message} - can't recover key, possible wrong answers to security" +
+                                    $"questions", "Can't Recover Key", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     updateProgress(0);
                     onComplete(null);
                     return;
@@ -207,7 +207,7 @@ namespace CryptographicallySecureJournal.Forms
 
         private void ChangeSecurityQuestions(string password, Tuple<int, string>[] newSecurityQuestions)
         {
-            byte[] hashedPass = HashAndSalt.Password(Encoding.UTF8.GetBytes(password), _journal.PassSalt);
+            byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(password), _journal.PassSalt);
             const int afterHashProgress = 25;
             const int beforeUploadProgress = 75;
             UpdateProgressBar(afterHashProgress);
@@ -215,7 +215,7 @@ namespace CryptographicallySecureJournal.Forms
             try
             {
                 decryptedText = Encoding.UTF8.GetString(
-                    AesEncryption.Decrypt(_journal.EncryptedText, hashedPass));
+                    AesEncryption.Decrypt(_journal.EncryptedText, key));
             }
             catch (Exception ex)
             {

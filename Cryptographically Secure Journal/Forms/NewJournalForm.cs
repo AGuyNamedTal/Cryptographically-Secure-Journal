@@ -28,7 +28,7 @@ namespace CryptographicallySecureJournal.Forms
         private void GenerateJournal()
         {
             const int beforeUploadValue = 65;
-            (Journal journal, byte[] password) = Journal.GenerateNewJournal("",
+            (Journal journal, byte[] key) = Journal.GenerateNewJournal("",
                 passTxtBox.Text, _securityQuestions, value =>
                 {
                     UpdateProgressBar((int)(value * beforeUploadValue / 100d));
@@ -46,7 +46,7 @@ namespace CryptographicallySecureJournal.Forms
 
                 Invoke(new Action(() =>
                 {
-                    this.SwitchForm(() => new JournalEditorForm("", password, journal, _driveManager));
+                    this.SwitchForm(() => new JournalEditorForm("", key, journal, _driveManager));
                 }));
             });
 

@@ -92,7 +92,7 @@ namespace CryptographicallySecureJournal
             Action<int> progressBarUpdate)
         {
             byte[] salt = HashAndSalt.GenerateSalt();
-            byte[] password = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), salt);
+            byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), salt);
             EncryptedShare[] encryptedShares = null;
             const int progressAfterGeneration = 100;
             if (securityQuestions != null)
@@ -100,7 +100,7 @@ namespace CryptographicallySecureJournal
                 int startingProgress = (progressAfterGeneration / (1 + securityQuestions.Length));
                 progressBarUpdate(startingProgress);
                 encryptedShares = EncryptedShare.CreateSecurityQuestions(securityQuestions,
-                    password, value =>
+                    key, value =>
                     {
                         progressBarUpdate((int)(startingProgress + value / 100d * (progressAfterGeneration - startingProgress)));
                     });
@@ -110,9 +110,9 @@ namespace CryptographicallySecureJournal
                 progressBarUpdate(progressAfterGeneration);
             }
             Journal journal = new Journal(
-                AesEncryption.Encrypt(Encoding.UTF8.GetBytes(text), password),
+                AesEncryption.Encrypt(Encoding.UTF8.GetBytes(text), key),
                 salt, encryptedShares);
-            return (journal, password);
+            return (journal, key);
         }
 
         public MemoryStream ToMemoryStream()
