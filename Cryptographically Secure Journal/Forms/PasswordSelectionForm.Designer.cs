@@ -105,6 +105,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "PasswordSelectionForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Choose New Password";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PasswordSelectionFormClosing);
             this.ResumeLayout(false);

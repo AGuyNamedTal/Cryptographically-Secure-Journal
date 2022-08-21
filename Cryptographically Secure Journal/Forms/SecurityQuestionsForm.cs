@@ -20,6 +20,9 @@ namespace CryptographicallySecureJournal.Forms
             InitializeComponent();
             _secAnswers = new[] { secAns1, secAns2, secAns3, secAns4 };
             _secQuestions = new[] { secQues1, secQues2, secQues3, secQues4 };
+
+
+
             _requiredAnswers = _secAnswers.Length;
             string[] securityQuestions = Resources.SecurityQuestions.Split('\n')
             .Select(s => s.Replace("\r", "")).ToArray();
@@ -31,6 +34,12 @@ namespace CryptographicallySecureJournal.Forms
 
             titleLbl.Text = titleTxt;
             secQuestionsCheckbox.Visible = showCheckBox;
+            //TODO: REMOVE THIS!!!!
+            for (int i = 0; i < 4; i++)
+            {
+                _secQuestions[i].SelectedIndex = i;
+                _secAnswers[i].Text = new string((char)('0' + i), 3);
+            }
         }
         public SecurityQuestionsForm(string titleTxt, bool showCheckBox, int[] questions,
             bool requireAnswersOnly) : this(titleTxt, showCheckBox)
@@ -78,7 +87,7 @@ namespace CryptographicallySecureJournal.Forms
 
         private bool ValidateData()
         {
-            if (_secQuestions.Count(secQuestion => secQuestion.SelectedIndex == -1) < _requiredAnswers)
+            if (_secQuestions.Count(secQuestion => secQuestion.SelectedIndex != -1) < _requiredAnswers)
             {
                 ShowInvalidDataMsgBox($"You must select {_requiredAnswers} questions");
                 return false;

@@ -43,7 +43,10 @@ namespace CryptographicallySecureJournal.Forms
                     return;
                 }
 
-                this.SwitchForm(new JournalEditorForm("", password, journal, _driveManager));
+                Invoke(new Action(() =>
+                {
+                    this.SwitchForm(() => new JournalEditorForm("", password, journal, _driveManager));
+                }));
             });
 
         }

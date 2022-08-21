@@ -1,6 +1,5 @@
 ﻿using Isopoh.Cryptography.Argon2;
 using System;
-using System.Linq;
 using System.Security.Cryptography;
 
 namespace CryptographicallySecureJournal
@@ -48,7 +47,7 @@ namespace CryptographicallySecureJournal
                 hashStr += new string('=', requiredPadding);
             }
             byte[] hash = Convert.FromBase64String(hashStr);
-            return salt.Concat(hash).ToArray();
+            return hash;
         }
     }
 }

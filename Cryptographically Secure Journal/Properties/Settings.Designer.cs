@@ -22,5 +22,17 @@ namespace CryptographicallySecureJournal.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AUTO_CONNECT {
+            get {
+                return ((bool)(this["AUTO_CONNECT"]));
+            }
+            set {
+                this["AUTO_CONNECT"] = value;
+            }
+        }
     }
 }

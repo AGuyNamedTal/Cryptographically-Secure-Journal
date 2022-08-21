@@ -11,12 +11,12 @@ namespace CryptographicallySecureJournal.Forms
         private readonly byte[] _passHash;
         private readonly DriveManager _driveManager;
         private readonly Journal _journal;
-        private readonly string _initialText;
+        private string _uploadedText;
 
         public JournalEditorForm(string text, byte[] passHash, Journal journal, DriveManager driveManager)
         {
             InitializeComponent();
-            _initialText = text;
+            _uploadedText = text;
             txtBox.AppendText(text);
             txtBox.ScrollToBottom();
             _passHash = passHash;
@@ -26,8 +26,7 @@ namespace CryptographicallySecureJournal.Forms
 
         private void JournalEditorFormClosing(object sender, FormClosingEventArgs e)
         {
-
-            if (_initialText != txtBox.Text && ShowExitWithoutUploading())
+            if (_uploadedText != txtBox.Text && ShowExitWithoutUploading())
             {
                 e.Cancel = true;
             }
@@ -49,7 +48,8 @@ namespace CryptographicallySecureJournal.Forms
                         return;
                     }
                 }
-                Close();
+
+                this.CloseOnUIThread();
             })).Start();
         }
 
@@ -61,17 +61,22 @@ namespace CryptographicallySecureJournal.Forms
 
         private void UploadJournal(Action<bool> onComplete)
         {
-            if (_initialText == txtBox.Text)
+            string textToUpload = txtBox.Text;
+            if (_uploadedText == textToUpload)
             {
-                onComplete(false);
+                onComplete?.Invoke(false);
                 return;
             }
-            _journal.EncryptedText = AesEncryption.Encrypt(Encoding.UTF8.GetBytes(txtBox.Text),
+            _journal.EncryptedText = AesEncryption.Encrypt(Encoding.UTF8.GetBytes(textToUpload),
                 _passHash);
 
             _driveManager.UploadJournal(_journal, UpdateProgressBar, progress =>
             {
                 bool failed = MsgBoxForFailedUpload(progress);
+                if (!failed)
+                {
+                    _uploadedText = textToUpload;
+                }
                 onComplete?.Invoke(failed);
             });
         }

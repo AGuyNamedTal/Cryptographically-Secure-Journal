@@ -10,28 +10,69 @@ namespace CryptographicallySecureJournal.Forms
     public partial class StartupForm : Form
     {
         private DriveManager _driveManager;
-        private Journal _journal;
+        public Journal Journal;
         public StartupForm()
         {
             InitializeComponent();
             SetEnabledOfJonControls(false);
         }
+        private void StartupFormLoad(object sender, EventArgs e)
+        {
+            bool autoConnect = SettingsManager.AutoConnect;
+            connectAutomaticallyCheckBox.Checked = autoConnect;
+            if (autoConnect)
+            {
+                ConnectToDriveBtnClick(null, null);
+            }
+        }
 
         private void ConnectToDriveBtnClick(object sender, EventArgs e)
         {
+            SetEnabledConnectDriveBtn(false);
             try
             {
-                _driveManager = new DriveManager();
+                _driveManager = new DriveManager(success =>
+                {
+
+                    if (success)
+                    {
+                        FindAndDownloadJournal();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Can't connect", "Error connecting with Google Drive",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        SetEnabledConnectDriveBtn(true);
+                    }
+
+                });
             }
             catch (Exception exception)
             {
                 MessageBox.Show(exception.Message, "Error connecting with Google Drive",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SetEnabledConnectDriveBtn(true);
                 return;
             }
+        }
 
+        private void SetEnabledConnectDriveBtn(bool enabled)
+        {
+            if (connectToDriveBtn.InvokeRequired)
+            {
+                connectToDriveBtn.Invoke(new Action(() => connectToDriveBtn.Enabled = enabled));
+            }
+            else
+            {
+                connectToDriveBtn.Enabled = enabled;
+            }
+        }
+
+        private void FindAndDownloadJournal()
+        {
             if (!_driveManager.FindJournalFile())
             {
+                SetEnabledConnectDriveBtn(true);
                 MessageBox.Show("Journal not found on Google Drive\n" +
                                 "Please create a new journal", "Journal not found", MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -47,17 +88,19 @@ namespace CryptographicallySecureJournal.Forms
                     MessageBox.Show(downloadProgress.Exception.Message ?? "Download failed",
                         "Error downloading journal from Google Drive", MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
+                    SetEnabledConnectDriveBtn(true);
                     memoryStream.Dispose();
                     return;
                 }
 
                 try
                 {
-                    _journal = new Journal(memoryStream);
-                    SetEnabledOfJonControls(true);
+                    memoryStream.Position = 0;
+                    Journal = new Journal(memoryStream);
                 }
                 catch (Exception exception)
                 {
+                    SetEnabledConnectDriveBtn(true);
                     if (MessageBox.Show($"Can't parse journal - {exception.Message ?? "No details"}\n" +
                                         $"Would you like to create a new journal?", "Journal Corrupt",
                             MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.Yes)
@@ -69,13 +112,13 @@ namespace CryptographicallySecureJournal.Forms
                 {
                     memoryStream.Dispose();
                 }
+                SetEnabledOfJonControls(true);
+                SetEnabledConnectDriveBtn(true);
             });
-
-
 
         }
 
-        private void UpdateProgressBar(int value)
+        public void UpdateProgressBar(int value)
         {
             progressBar.Invoke(new Action(() => progressBar.Value = value));
         }
@@ -88,11 +131,13 @@ namespace CryptographicallySecureJournal.Forms
 
         private void DecryptJournal(string pass)
         {
-            byte[] passHash = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), _journal.PassSalt);
+            UpdateProgressBar(0);
+            byte[] passHash = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), Journal.PassSalt);
+            UpdateProgressBar(90);
             byte[] decryptedText;
             try
             {
-                decryptedText = AesEncryption.Decrypt(_journal.EncryptedText, passHash);
+                decryptedText = AesEncryption.Decrypt(Journal.EncryptedText, passHash);
             }
             catch (Exception exception)
             {
@@ -101,23 +146,38 @@ namespace CryptographicallySecureJournal.Forms
                     MessageBoxIcon.Error);
                 return;
             }
-
-            this.SwitchForm(new JournalEditorForm(
-                Encoding.UTF8.GetString(decryptedText), passHash, _journal, _driveManager));
+            UpdateProgressBar(100);
+            this.SwitchForm(() => new JournalEditorForm(
+                Encoding.UTF8.GetString(decryptedText), passHash, Journal, _driveManager));
         }
 
         private void SecuritySettingsLblClick(object sender, EventArgs e)
         {
-            new SecurityOptionsForm(_driveManager, _journal).ShowDialog();
+            new SecurityOptionsForm(_driveManager, Journal, this).ShowDialog();
         }
 
-        private void SetEnabledOfJonControls(bool enabled)
+        public void SetEnabledOfJonControls(bool enabled)
         {
             Control[] controls = { securitySettingsLbl, continueBtn, passwordTxtBox };
             foreach (Control control in controls)
             {
-                control.Enabled = enabled;
+                void SetEnabled() => control.Enabled = enabled;
+                if (control.InvokeRequired)
+                {
+                    control.Invoke((Action)SetEnabled);
+                }
+                else
+                {
+                    SetEnabled();
+                }
             }
         }
+
+        private void ConnectAutomaticallyCheckedChanged(object sender, EventArgs e)
+        {
+            SettingsManager.AutoConnect = connectAutomaticallyCheckBox.Checked;
+        }
+
+
     }
 }

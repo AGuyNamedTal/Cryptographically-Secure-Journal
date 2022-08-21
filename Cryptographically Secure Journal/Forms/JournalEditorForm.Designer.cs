@@ -88,6 +88,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "JournalEditorForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "JournalEditorForm";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.JournalEditorFormClosing);
             this.ResumeLayout(false);

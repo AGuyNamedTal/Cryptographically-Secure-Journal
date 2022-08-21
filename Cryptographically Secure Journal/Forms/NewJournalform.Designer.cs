@@ -66,6 +66,7 @@
             this.passTxtBox.PasswordChar = '*';
             this.passTxtBox.Size = new System.Drawing.Size(410, 27);
             this.passTxtBox.TabIndex = 2;
+            this.passTxtBox.Text = "password";
             // 
             // verPassTxtBox
             // 
@@ -76,6 +77,7 @@
             this.verPassTxtBox.PasswordChar = '*';
             this.verPassTxtBox.Size = new System.Drawing.Size(410, 27);
             this.verPassTxtBox.TabIndex = 3;
+            this.verPassTxtBox.Text = "password";
             // 
             // secQuestionsCheckbox
             // 
@@ -148,6 +150,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "NewJournalForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Create New Journal";
             this.ResumeLayout(false);
             this.PerformLayout();

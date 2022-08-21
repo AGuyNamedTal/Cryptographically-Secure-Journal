@@ -11,117 +11,171 @@ namespace CryptographicallySecureJournal.Forms
     {
         private readonly DriveManager _driveManager;
         private Journal _journal;
-        public SecurityOptionsForm(DriveManager driveManager, Journal journal)
+        private readonly StartupForm _owner;
+        public SecurityOptionsForm(DriveManager driveManager, Journal journal, StartupForm owner)
         {
             InitializeComponent();
             _driveManager = driveManager;
             _journal = journal;
+            _owner = owner;
         }
 
         private void ResetPassBtnClick(object sender, EventArgs e)
         {
             progressBar.Value = 0;
-            if (_journal.EncryptedShares == null)
-            {
-                MessageBox.Show("No security questions, can't reset password", "No Security Questions",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            PasswordSelectionForm passForm = new PasswordSelectionForm();
-            if (passForm.ShowDialog() != DialogResult.OK || passForm.Password == null)
-            {
-                return;
-            }
-
-            string newPass = passForm.Password;
-
-            int[] questionsIndexes = _journal.QuestionsIndexes;
-            SecurityQuestionsForm securityQuestionsForm = new SecurityQuestionsForm(
-                $"Answer {EncryptedShare.MinimumNumberOfQuestions} out of 4 security" +
-                $" questions (the 4th one will be ignored)", false, questionsIndexes, true);
-            if (securityQuestionsForm.ShowDialog() != DialogResult.OK || securityQuestionsForm.Result == null)
-            {
-                return;
-            }
-
-            Tuple<int, string>[] oldSecurityQuestions = securityQuestionsForm.Result;
-
-            securityQuestionsForm = new SecurityQuestionsForm("Please select new security questions",
-                true, questionsIndexes, false);
-            if (securityQuestionsForm.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-
-            Tuple<int, string>[] newSecurityQuestions = securityQuestionsForm.Result;
-
-
+            const int afterKeyVal = 75;
             new Thread(() =>
-                ChangePassword(oldSecurityQuestions, newPass, newSecurityQuestions)).Start();
-        }
-
-        private void ChangePassword(Tuple<int, string>[] questionsAnswers, string newPass, Tuple<int, string>[] newSecurityQuestions)
-        {
-
-            const int afterAssemblyProgress = 50;
-            byte[] oldPass;
-            try
             {
-                oldPass = EncryptedShare.RecoverPassword(questionsAnswers,
-                    _journal.EncryptedShares, value =>
+                GetEncryptionKey(value => { UpdateProgressBar((int)(value / 100d * afterKeyVal)); },
+                    key =>
                     {
-                        UpdateProgressBar((int)(value * afterAssemblyProgress / 100d));
+                        string oldText;
+                        try
+                        {
+                            oldText = Encoding.UTF8.GetString(AesEncryption.Decrypt(_journal.EncryptedText, key));
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"{ex.Message} - can't decrypt journal, possible wrong answers to security" +
+                                            $"questions, wrong password or corrupt journal", "Can't Recover Journal",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            UpdateProgressBar(0);
+                            return;
+                        }
+
+                        PasswordSelectionForm passForm = new PasswordSelectionForm();
+                        if (passForm.ShowDialog() != DialogResult.OK || passForm.Password == null)
+                        {
+                            return;
+                        }
+
+                        string newPass = passForm.Password;
+
+
+
+                        SecurityQuestionsForm securityQuestionsForm = new SecurityQuestionsForm(
+                            "Please select new security questions",
+                            true, _journal.QuestionsIndexes, false);
+                        if (securityQuestionsForm.ShowDialog() != DialogResult.OK)
+                        {
+                            return;
+                        }
+
+                        Tuple<int, string>[] newSecurityQuestions = securityQuestionsForm.Result;
+                        ChangePassword(key, oldText, newPass, newSecurityQuestions,
+                            value => { UpdateProgressBar((int)(value / 100d * (100 - afterKeyVal) + afterKeyVal)); });
                     });
+            })
+            {
+                ApartmentState = ApartmentState.STA
+            }.Start();
 
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"{ex.Message} - can't recover password, possible wrong answers to security" +
-                                $"questions", "Can't Recover Password", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                UpdateProgressBar(0);
-                return;
-            }
-            const int beforeUploadProgress = 75;
-            string oldText;
-            try
-            {
-                oldText = Encoding.UTF8.GetString(AesEncryption.Decrypt(_journal.EncryptedText, oldPass));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"{ex.Message} - can't decrypt journal, possible wrong answers to security" +
-                                $"questions or corrupt journal", "Can't Recover Journal",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                UpdateProgressBar(0);
-                return;
-            }
 
-            (Journal journal, byte[] _) = Journal.GenerateNewJournal(oldText,
-                newPass, newSecurityQuestions, val =>
-                {
-                    int newVal = (int)(val / 100d * (beforeUploadProgress - afterAssemblyProgress) + afterAssemblyProgress);
-                    UpdateProgressBar(newVal);
-                });
-            UpdateJournal(journal, beforeUploadProgress, 100);
 
         }
 
-        private void UpdateJournal(Journal journal, int beforeUploadProgress, int afterUploadProgress)
+        private void GetEncryptionKey(Action<int> updateProgress, Action<byte[]> onComplete)
         {
-            _driveManager.UploadJournal(journal, value =>
+            void GetByPassword()
             {
-                UpdateProgressBar((int)(beforeUploadProgress + (value / 100d * (afterUploadProgress - beforeUploadProgress))));
-            }, progress =>
+                string password = Interaction.InputBox("Security questions not found," +
+                                                       "Please enter old password", "Enter Password");
+                if (String.IsNullOrWhiteSpace(password))
+                {
+                    onComplete(null);
+                }
+                else
+                {
+                    byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(password),
+                        _journal.PassSalt);
+                    updateProgress(100);
+                    onComplete(key);
+                }
+            }
+
+            void GetBySecurityQuestions()
             {
-                if (JournalEditorForm.MsgBoxForFailedUpload(progress))
+                int[] questionsIndexes = _journal.QuestionsIndexes;
+                SecurityQuestionsForm securityQuestionsForm = new SecurityQuestionsForm(
+                    $"Answer {EncryptedShare.MinimumNumberOfQuestions} out of 4 security" +
+                    $" questions (the 4th one will be ignored)", false, questionsIndexes, true);
+                if (securityQuestionsForm.ShowDialog() != DialogResult.OK || securityQuestionsForm.Result == null)
                 {
                     return;
                 }
-                _journal = journal;
-                MessageBox.Show("Changed successfully", "Success", MessageBoxButtons.OK);
 
+                Tuple<int, string>[] securityQuestions = securityQuestionsForm.Result;
+                byte[] pass;
+                try
+                {
+                    pass = EncryptedShare.RecoverPassword(securityQuestions,
+                        _journal.EncryptedShares, updateProgress);
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"{ex.Message} - can't recover password, possible wrong answers to security" +
+                                    $"questions", "Can't Recover Password", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    updateProgress(0);
+                    onComplete(null);
+                    return;
+                }
+                onComplete(pass);
+
+            }
+
+            if (_journal.EncryptedShares == null)
+            {
+                GetByPassword();
+            }
+            else
+            {
+                MethodOfRecoveryForm passForm = new MethodOfRecoveryForm();
+                if (passForm.ShowDialog() != DialogResult.OK)
+                {
+                    onComplete(null);
+                }
+                switch (passForm.Result)
+                {
+                    case MethodOfRecoveryForm.RecoveryMethod.Password:
+                        GetByPassword();
+                        break;
+                    case MethodOfRecoveryForm.RecoveryMethod.SecQuestions:
+                        GetBySecurityQuestions();
+                        break;
+                }
+            }
+        }
+
+
+        private void ChangePassword(byte[] key, string oldText, string newPass, Tuple<int, string>[] newSecurityQuestions,
+            Action<int> progress)
+        {
+
+
+            const int beforeUploadProgress = 50;
+            (Journal journal, byte[] _) = Journal.GenerateNewJournal(oldText,
+                newPass, newSecurityQuestions, val =>
+                { progress((int)(beforeUploadProgress / 100d * val)); });
+            UpdateJournal(journal, val =>
+            {
+                UpdateProgressBar((int)(val / 100d * (100 - beforeUploadProgress) + beforeUploadProgress));
             });
+
+        }
+
+        private void UpdateJournal(Journal journal, Action<int> updateProgressBar)
+        {
+            _driveManager.UploadJournal(journal, updateProgressBar, progress =>
+           {
+               if (JournalEditorForm.MsgBoxForFailedUpload(progress))
+               {
+                   return;
+               }
+               _journal = journal;
+               MessageBox.Show("Changed successfully", "Success", MessageBoxButtons.OK);
+
+           });
         }
         private void UpdateProgressBar(int val)
         {
@@ -156,8 +210,19 @@ namespace CryptographicallySecureJournal.Forms
             const int afterHashProgress = 25;
             const int beforeUploadProgress = 75;
             UpdateProgressBar(afterHashProgress);
-            string decryptedText = Encoding.UTF8.GetString(
-                AesEncryption.Decrypt(_journal.EncryptedText, hashedPass));
+            string decryptedText;
+            try
+            {
+                decryptedText = Encoding.UTF8.GetString(
+                    AesEncryption.Decrypt(_journal.EncryptedText, hashedPass));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{ex.Message} - can't recover journal, probably wrong password or corrupt journal",
+                    "Can't Recover Journal", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             (Journal journal, byte[] _) =
                 Journal.GenerateNewJournal(decryptedText, password, newSecurityQuestions,
                     value =>
@@ -165,7 +230,10 @@ namespace CryptographicallySecureJournal.Forms
                         UpdateProgressBar((int)((value / 100d) * (beforeUploadProgress - afterHashProgress) + afterHashProgress));
                     });
             UpdateProgressBar(beforeUploadProgress);
-            UpdateJournal(journal, beforeUploadProgress, 100);
+            UpdateJournal(journal, value =>
+            {
+                UpdateProgressBar((int)(value / 100d * (100 - beforeUploadProgress) + beforeUploadProgress));
+            });
 
         }
 
@@ -176,7 +244,7 @@ namespace CryptographicallySecureJournal.Forms
                 FileName = DriveManager.FileName,
                 AddExtension = false,
                 CheckPathExists = true,
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments),
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 Title = "Choose where to save",
                 RestoreDirectory = true
             })
@@ -239,7 +307,7 @@ namespace CryptographicallySecureJournal.Forms
         private void DeleteJonBtnClick(object sender, EventArgs e)
         {
 
-            if (MessageBox.Show("Are you sure you want to delete the journal from google drive?",
+            if (MessageBox.Show("Are you sure you want to delete the journal from Google Drive?",
                     "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
             {
                 return;
@@ -251,6 +319,11 @@ namespace CryptographicallySecureJournal.Forms
                 if (task.Exception == null)
                 {
                     UpdateProgressBar(100);
+                    _journal = null;
+                    _owner.Journal = null;
+                    _owner.SetEnabledOfJonControls(false);
+                    _owner.UpdateProgressBar(0);
+                    this.CloseOnUIThread();
                 }
                 else
                 {

@@ -27,10 +27,30 @@ namespace CryptographicallySecureJournal
                 Application.Run(newForm);
             });
             myThread.SetApartmentState(ApartmentState.STA);
-            oldForm.Close();
             myThread.Start();
+            oldForm.Invoke(new Action(oldForm.Close));
+        }
+        public static void SwitchForm(this Form oldForm, Func<Form> newForm)
+        {
+            Thread myThread = new Thread((ThreadStart)delegate
+            {
+                Application.Run(newForm());
+            });
+            myThread.SetApartmentState(ApartmentState.STA);
+            myThread.Start();
+            oldForm.Invoke(new Action(oldForm.Close));
         }
 
-
+        public static void CloseOnUIThread(this Form form)
+        {
+            if (form.InvokeRequired)
+            {
+                form.Invoke(new Action(form.Close));
+            }
+            else
+            {
+                form.Close();
+            }
+        }
     }
 }
