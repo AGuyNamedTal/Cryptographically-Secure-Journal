@@ -138,9 +138,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FormUtils.cs" />
+    <Compile Include="Utils\FormUtils.cs" />
     <Compile Include="SettingsManager.cs" />
-    <Compile Include="StreamUtils.cs" />
+    <Compile Include="Utils\StreamUtils.cs" />
     <EmbeddedResource Include="Forms\JournalEditorForm.resx">
       <DependentUpon>JournalEditorForm.cs</DependentUpon>
     </EmbeddedResource>

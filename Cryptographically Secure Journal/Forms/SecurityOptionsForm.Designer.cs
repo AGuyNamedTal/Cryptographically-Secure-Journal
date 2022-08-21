@@ -112,6 +112,7 @@
             this.Name = "SecurityOptionsForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Security Options";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.SecurityOptionsFormClosed);
             this.ResumeLayout(false);
 
         }

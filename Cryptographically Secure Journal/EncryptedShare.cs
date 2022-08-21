@@ -1,4 +1,5 @@
-﻿using SecretSharingDotNet.Cryptography;
+﻿using CryptographicallySecureJournal.Utils;
+using SecretSharingDotNet.Cryptography;
 using SecretSharingDotNet.Math;
 using System;
 using System.IO;

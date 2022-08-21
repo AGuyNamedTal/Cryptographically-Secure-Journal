@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualBasic;
+﻿using CryptographicallySecureJournal.Utils;
+using Microsoft.VisualBasic;
 using System;
 using System.IO;
 using System.Text;
@@ -331,6 +332,11 @@ namespace CryptographicallySecureJournal.Forms
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             });
+        }
+
+        private void SecurityOptionsFormClosed(object sender, FormClosedEventArgs e)
+        {
+            _owner.Journal = _journal;
         }
     }
 }

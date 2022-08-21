@@ -77,9 +77,9 @@
             this.securitySettingsLbl.ForeColor = System.Drawing.SystemColors.Highlight;
             this.securitySettingsLbl.Location = new System.Drawing.Point(172, 141);
             this.securitySettingsLbl.Name = "securitySettingsLbl";
-            this.securitySettingsLbl.Size = new System.Drawing.Size(166, 30);
+            this.securitySettingsLbl.Size = new System.Drawing.Size(165, 30);
             this.securitySettingsLbl.TabIndex = 4;
-            this.securitySettingsLbl.Text = "Security Settings";
+            this.securitySettingsLbl.Text = "Security Options";
             this.securitySettingsLbl.Click += new System.EventHandler(this.SecuritySettingsLblClick);
             // 
             // progressBar

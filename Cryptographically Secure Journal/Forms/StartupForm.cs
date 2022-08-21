@@ -1,4 +1,6 @@
-﻿using Google.Apis.Download;
+﻿using CryptographicallySecureJournal.Utils;
+using Google.Apis.Auth.OAuth2.Responses;
+using Google.Apis.Download;
 using System;
 using System.IO;
 using System.Text;
@@ -40,7 +42,7 @@ namespace CryptographicallySecureJournal.Forms
                     }
                     else
                     {
-                        MessageBox.Show("Can't connect", "Error connecting with Google Drive",
+                        MessageBox.Show("Can't connect to Google Drive", "Error connecting with Google Drive",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                         SetEnabledConnectDriveBtn(true);
                     }
@@ -70,14 +72,24 @@ namespace CryptographicallySecureJournal.Forms
 
         private void FindAndDownloadJournal()
         {
-            if (!_driveManager.FindJournalFile())
+            try
             {
-                SetEnabledConnectDriveBtn(true);
-                MessageBox.Show("Journal not found on Google Drive\n" +
-                                "Please create a new journal", "Journal not found", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                this.SwitchForm(new NewJournalForm(_driveManager));
-                return;
+                if (!_driveManager.FindJournalFile())
+                {
+                    SetEnabledConnectDriveBtn(true);
+                    MessageBox.Show("Journal not found on Google Drive\n" +
+                                    "Please create a new journal", "Journal not found", MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    this.SwitchForm(new NewJournalForm(_driveManager));
+                    return;
+                }
+            }
+            catch (TokenResponseException exception)
+            {
+                MessageBox.Show($"{exception.Message} - a token error has occurred, please try connecting again\n" +
+                                $"The application will now restart.",
+                    "Token Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Restart();
             }
 
             MemoryStream memoryStream = new MemoryStream();

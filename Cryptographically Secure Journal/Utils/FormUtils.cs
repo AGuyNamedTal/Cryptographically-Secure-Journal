@@ -2,10 +2,11 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable IdentifierTypo
 
-namespace CryptographicallySecureJournal
+namespace CryptographicallySecureJournal.Utils
 {
     internal static class FormUtils
     {

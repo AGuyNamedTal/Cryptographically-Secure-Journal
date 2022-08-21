@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace CryptographicallySecureJournal
+namespace CryptographicallySecureJournal.Utils
 {
     public static class StreamUtils
     {

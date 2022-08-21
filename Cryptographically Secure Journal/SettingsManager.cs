@@ -6,7 +6,6 @@ namespace CryptographicallySecureJournal
     {
         private static readonly Settings Settings = Settings.Default;
 
-
         public static bool AutoConnect
         {
             get => Settings.AUTO_CONNECT;
