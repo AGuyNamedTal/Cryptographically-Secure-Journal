@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace CryptographicallySecureJournal
+namespace CryptographicallySecureJournal.Crypto
 {
     public static class AesEncryption
     {

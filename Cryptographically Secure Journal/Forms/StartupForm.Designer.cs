@@ -1,4 +1,6 @@
-﻿namespace CryptographicallySecureJournal.Forms
+﻿using CryptographicallySecureJournal.Utils;
+
+namespace CryptographicallySecureJournal.Forms
 {
     partial class StartupForm
     {
@@ -32,7 +34,7 @@
             this.passwordTxtBox = new System.Windows.Forms.TextBox();
             this.continueBtn = new System.Windows.Forms.Button();
             this.securitySettingsLbl = new System.Windows.Forms.Label();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.ProgressBar = new UpdateableProgressBar();
             this.connectAutomaticallyCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
@@ -82,12 +84,12 @@
             this.securitySettingsLbl.Text = "Security Options";
             this.securitySettingsLbl.Click += new System.EventHandler(this.SecuritySettingsLblClick);
             // 
-            // progressBar
+            // ProgressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(1, 240);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(494, 17);
-            this.progressBar.TabIndex = 5;
+            this.ProgressBar.Location = new System.Drawing.Point(1, 240);
+            this.ProgressBar.Name = "ProgressBar";
+            this.ProgressBar.Size = new System.Drawing.Size(494, 17);
+            this.ProgressBar.TabIndex = 5;
             // 
             // connectAutomaticallyCheckBox
             // 
@@ -106,7 +108,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(493, 256);
             this.Controls.Add(this.connectAutomaticallyCheckBox);
-            this.Controls.Add(this.progressBar);
+            this.Controls.Add(this.ProgressBar);
             this.Controls.Add(this.securitySettingsLbl);
             this.Controls.Add(this.continueBtn);
             this.Controls.Add(this.passwordTxtBox);
@@ -129,7 +131,7 @@
         private System.Windows.Forms.TextBox passwordTxtBox;
         private System.Windows.Forms.Button continueBtn;
         private System.Windows.Forms.Label securitySettingsLbl;
-        private System.Windows.Forms.ProgressBar progressBar;
+        public UpdateableProgressBar ProgressBar;
         private System.Windows.Forms.CheckBox connectAutomaticallyCheckBox;
     }
 }

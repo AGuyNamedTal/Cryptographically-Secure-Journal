@@ -1,4 +1,6 @@
-﻿namespace CryptographicallySecureJournal.Forms
+﻿using CryptographicallySecureJournal.Utils;
+
+namespace CryptographicallySecureJournal.Forms
 {
     partial class JournalEditorForm
     {
@@ -30,7 +32,7 @@
         {
             this.txtBox = new System.Windows.Forms.TextBox();
             this.uploadBtn = new System.Windows.Forms.Button();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.progressBar = new UpdateableProgressBar();
             this.uploadAndExitBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -100,7 +102,7 @@
 
         private System.Windows.Forms.TextBox txtBox;
         private System.Windows.Forms.Button uploadBtn;
-        private System.Windows.Forms.ProgressBar progressBar;
+        private UpdateableProgressBar progressBar;
         private System.Windows.Forms.Button uploadAndExitBtn;
     }
 }

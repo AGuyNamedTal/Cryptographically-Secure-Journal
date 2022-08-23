@@ -1,4 +1,5 @@
-﻿using CryptographicallySecureJournal.Utils;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Utils;
 using System;
 using System.IO;
 using System.Linq;
@@ -74,7 +75,6 @@ namespace CryptographicallySecureJournal
             Flags = memoryStream.Read(1)[0];
             PassSalt = memoryStream.Read(HashAndSalt.SaltLength);
             ParseSecurityQuestions(memoryStream);
-            //EncryptedText = memoryStream.ToArray().Skip((int)memoryStream.Position).ToArray();
             EncryptedText = memoryStream.Read((int)(memoryStream.Length - memoryStream.Position));
         }
 
@@ -89,25 +89,22 @@ namespace CryptographicallySecureJournal
 
 
         public static (Journal, byte[]) GenerateNewJournal(string text, string pass, Tuple<int, string>[] securityQuestions,
-            Action<int> progressBarUpdate)
+           ProgressUpdater progressUpdater)
         {
             byte[] salt = HashAndSalt.GenerateSalt();
             byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), salt);
             EncryptedShare[] encryptedShares = null;
-            const int progressAfterGeneration = 100;
+            const double progressAfterGeneration = 1d;
             if (securityQuestions != null)
             {
-                int startingProgress = (progressAfterGeneration / (1 + securityQuestions.Length));
-                progressBarUpdate(startingProgress);
+                double startingProgress = (progressAfterGeneration / (1 + securityQuestions.Length));
+                progressUpdater.Update(startingProgress);
                 encryptedShares = EncryptedShare.CreateSecurityQuestions(securityQuestions,
-                    key, value =>
-                    {
-                        progressBarUpdate((int)(startingProgress + value / 100d * (progressAfterGeneration - startingProgress)));
-                    });
+                    key, new ProgressUpdater(progressUpdater, startingProgress, progressAfterGeneration));
             }
             else
             {
-                progressBarUpdate(progressAfterGeneration);
+                progressUpdater.Update(progressAfterGeneration);
             }
             Journal journal = new Journal(
                 AesEncryption.Encrypt(Encoding.UTF8.GetBytes(text), key),

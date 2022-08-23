@@ -89,7 +89,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AESEncryption.cs" />
+    <Compile Include="Crypto\AESEncryption.cs" />
     <Compile Include="DriveManager.cs" />
     <Compile Include="Forms\MethodOfRecoveryForm.cs">
       <SubType>Form</SubType>
@@ -103,7 +103,7 @@
     <Compile Include="Forms\PasswordSelectionForm.Designer.cs">
       <DependentUpon>PasswordSelectionForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="HashAndSalt.cs" />
+    <Compile Include="Crypto\HashAndSalt.cs" />
     <Compile Include="Journal.cs" />
     <Compile Include="Forms\JournalEditorForm.cs">
       <SubType>Form</SubType>
@@ -137,7 +137,12 @@
       <DependentUpon>StartupForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="Utils\ProgressUpdater.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Crypto\ShamirSecretSharing.cs" />
+    <Compile Include="Utils\UpdateableProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Utils\FormUtils.cs" />
     <Compile Include="SettingsManager.cs" />
     <Compile Include="Utils\StreamUtils.cs" />

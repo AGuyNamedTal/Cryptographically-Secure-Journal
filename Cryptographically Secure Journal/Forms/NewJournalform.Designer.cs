@@ -1,4 +1,6 @@
-﻿namespace CryptographicallySecureJournal.Forms
+﻿using CryptographicallySecureJournal.Utils;
+
+namespace CryptographicallySecureJournal.Forms
 {
     partial class NewJournalForm
     {
@@ -34,7 +36,7 @@
             this.verPassTxtBox = new System.Windows.Forms.TextBox();
             this.secQuestionsCheckbox = new System.Windows.Forms.CheckBox();
             this.createNewJournalBtn = new System.Windows.Forms.Button();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.progressBar = new UpdateableProgressBar();
             this.infoLbl = new System.Windows.Forms.Label();
             this.backBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -165,7 +167,7 @@
         private System.Windows.Forms.TextBox verPassTxtBox;
         private System.Windows.Forms.CheckBox secQuestionsCheckbox;
         private System.Windows.Forms.Button createNewJournalBtn;
-        private System.Windows.Forms.ProgressBar progressBar;
+        private UpdateableProgressBar progressBar;
         private System.Windows.Forms.Label infoLbl;
         private System.Windows.Forms.Button backBtn;
     }

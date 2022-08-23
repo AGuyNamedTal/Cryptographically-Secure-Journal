@@ -42,6 +42,7 @@ namespace CryptographicallySecureJournal.Utils
             oldForm.Invoke(new Action(oldForm.Close));
         }
 
+
         public static void CloseOnUIThread(this Form form)
         {
             if (form.InvokeRequired)

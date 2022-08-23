@@ -27,17 +27,12 @@ namespace CryptographicallySecureJournal.Forms
 
         private void GenerateJournal()
         {
-            const int beforeUploadValue = 65;
+            const double beforeUploadValue = 0.65;
             (Journal journal, byte[] key) = Journal.GenerateNewJournal("",
-                passTxtBox.Text, _securityQuestions, value =>
-                {
-                    UpdateProgressBar((int)(value * beforeUploadValue / 100d));
-                });
-            UpdateProgressBar(beforeUploadValue);
-            _driveManager.UploadJournal(journal, value =>
-            {
-                UpdateProgressBar((int)(beforeUploadValue + (value / 100d * (100 - beforeUploadValue))));
-            }, progress =>
+                passTxtBox.Text, _securityQuestions, new ProgressUpdater(progressBar.Updater,
+                    0, beforeUploadValue));
+            _driveManager.UploadJournal(journal, new ProgressUpdater(progressBar.Updater,
+                beforeUploadValue, 1d), progress =>
             {
                 if (JournalEditorForm.MsgBoxForFailedUpload(progress))
                 {
@@ -52,10 +47,6 @@ namespace CryptographicallySecureJournal.Forms
 
         }
 
-        private void UpdateProgressBar(int newValue)
-        {
-            progressBar.Invoke(new Action(() => progressBar.Value = newValue));
-        }
 
 
         private void SecQuestionsCheckedChanged(object sender, EventArgs e)

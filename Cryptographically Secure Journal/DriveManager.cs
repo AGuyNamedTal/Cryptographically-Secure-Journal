@@ -1,4 +1,5 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using CryptographicallySecureJournal.Utils;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
@@ -73,21 +74,21 @@ namespace CryptographicallySecureJournal
             return true;
         }
 
-        public void DownloadJournal(MemoryStream memoryStream, Action<int> progressBarUpdate,
+        public void DownloadJournal(MemoryStream memoryStream, ProgressUpdater progress,
             Action<IDownloadProgress> onComplete)
         {
             FilesResource.GetRequest getRequest = _service.Files.Get(_fileId);
             getRequest.Fields = "size";
             _fileSize = getRequest.Execute().Size;
-            getRequest.MediaDownloader.ProgressChanged += progress =>
+            getRequest.MediaDownloader.ProgressChanged += val =>
                 {
-                    progressBarUpdate((int)(progress.BytesDownloaded / (double)_fileSize * 100));
+                    progress.Update(val.BytesDownloaded / (double)_fileSize);
                 };
             getRequest.DownloadAsync(memoryStream).ContinueWith(task => onComplete(task.Result));
 
         }
 
-        public void UploadJournal(Journal journal, Action<int> progressBarUpdate,
+        public void UploadJournal(Journal journal, ProgressUpdater progressUpdater,
             Action<IUploadProgress> onComplete)
         {
 
@@ -99,7 +100,7 @@ namespace CryptographicallySecureJournal
 
             void UpdateProgressBar(IUploadProgress progress)
             {
-                progressBarUpdate((int)(progress.BytesSent * 100d / stream.Length));
+                progressUpdater.Update((double)progress.BytesSent / stream.Length);
             }
 
             void ContinueWith(Task<IUploadProgress> task)
@@ -137,7 +138,7 @@ namespace CryptographicallySecureJournal
             deleteRequest.ExecuteAsync().ContinueWith(onComplete);
         }
 
-        public void UploadBackup(Journal journal, string fileName, Action<int> updateProgress,
+        public void UploadBackup(Journal journal, string fileName, ProgressUpdater progressUpdater,
             Action<IUploadProgress> onComplete)
         {
             MemoryStream stream = journal.ToMemoryStream();
@@ -148,7 +149,7 @@ namespace CryptographicallySecureJournal
                 stream, "application/unknown");
             createRequest.ProgressChanged += progress =>
             {
-                updateProgress((int)(progress.BytesSent * 100d / stream.Length));
+                progressUpdater.Update((double)progress.BytesSent / stream.Length);
             };
             createRequest.UploadAsync().ContinueWith(task =>
             {

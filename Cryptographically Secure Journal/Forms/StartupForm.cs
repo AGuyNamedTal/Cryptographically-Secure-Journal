@@ -1,4 +1,5 @@
-﻿using CryptographicallySecureJournal.Utils;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Utils;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Download;
 using System;
@@ -93,7 +94,7 @@ namespace CryptographicallySecureJournal.Forms
             }
 
             MemoryStream memoryStream = new MemoryStream();
-            _driveManager.DownloadJournal(memoryStream, UpdateProgressBar, downloadProgress =>
+            _driveManager.DownloadJournal(memoryStream, new ProgressUpdater(ProgressBar), downloadProgress =>
             {
                 if (downloadProgress.Status == DownloadStatus.Failed)
                 {
@@ -130,12 +131,6 @@ namespace CryptographicallySecureJournal.Forms
 
         }
 
-        public void UpdateProgressBar(int value)
-        {
-            progressBar.Invoke(new Action(() => progressBar.Value = value));
-        }
-
-
         private void ContinueBtnClick(object sender, EventArgs e)
         {
             new Thread(() => DecryptJournal(passwordTxtBox.Text)).Start();
@@ -143,9 +138,10 @@ namespace CryptographicallySecureJournal.Forms
 
         private void DecryptJournal(string pass)
         {
-            UpdateProgressBar(0);
+            ProgressUpdater progressUpdater = new ProgressUpdater(ProgressBar);
+            progressUpdater.Update(0);
             byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(pass), Journal.PassSalt);
-            UpdateProgressBar(90);
+            progressUpdater.Update(0.9);
             byte[] decryptedText;
             try
             {
@@ -158,7 +154,7 @@ namespace CryptographicallySecureJournal.Forms
                     MessageBoxIcon.Error);
                 return;
             }
-            UpdateProgressBar(100);
+            progressUpdater.Update(1);
             this.SwitchForm(() => new JournalEditorForm(
                 Encoding.UTF8.GetString(decryptedText), key, Journal, _driveManager));
         }

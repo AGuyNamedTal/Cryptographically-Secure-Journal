@@ -1,4 +1,5 @@
-﻿using CryptographicallySecureJournal.Utils;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Utils;
 using Microsoft.VisualBasic;
 using System;
 using System.IO;
@@ -13,21 +14,23 @@ namespace CryptographicallySecureJournal.Forms
         private readonly DriveManager _driveManager;
         private Journal _journal;
         private readonly StartupForm _owner;
+        private readonly ProgressUpdater _progressUpdater;
         public SecurityOptionsForm(DriveManager driveManager, Journal journal, StartupForm owner)
         {
             InitializeComponent();
             _driveManager = driveManager;
             _journal = journal;
             _owner = owner;
+            _progressUpdater = new ProgressUpdater(progressBar);
         }
 
         private void ResetPassBtnClick(object sender, EventArgs e)
         {
             progressBar.Value = 0;
-            const int afterKeyVal = 75;
+            const double afterKeyVal = 0.75;
             new Thread(() =>
             {
-                GetEncryptionKey(value => { UpdateProgressBar((int)(value / 100d * afterKeyVal)); },
+                GetEncryptionKey(new ProgressUpdater(_progressUpdater, 0, afterKeyVal),
                     key =>
                     {
                         string oldText;
@@ -40,7 +43,7 @@ namespace CryptographicallySecureJournal.Forms
                             MessageBox.Show($"{ex.Message} - can't decrypt journal, possible wrong answers to security" +
                                             $"questions, wrong password or corrupt journal", "Can't Recover Journal",
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            UpdateProgressBar(0);
+                            _progressUpdater.Update(0);
                             return;
                         }
 
@@ -52,8 +55,6 @@ namespace CryptographicallySecureJournal.Forms
 
                         string newPass = passForm.Password;
 
-
-
                         SecurityQuestionsForm securityQuestionsForm = new SecurityQuestionsForm(
                             "Please select new security questions",
                             true, _journal.QuestionsIndexes, false);
@@ -63,8 +64,7 @@ namespace CryptographicallySecureJournal.Forms
                         }
 
                         Tuple<int, string>[] newSecurityQuestions = securityQuestionsForm.Result;
-                        ChangePassword(key, oldText, newPass, newSecurityQuestions,
-                            value => { UpdateProgressBar((int)(value / 100d * (100 - afterKeyVal) + afterKeyVal)); });
+                        ChangePassword(oldText, newPass, newSecurityQuestions, new ProgressUpdater(_progressUpdater, afterKeyVal, 1));
                     });
             })
             {
@@ -75,7 +75,7 @@ namespace CryptographicallySecureJournal.Forms
 
         }
 
-        private void GetEncryptionKey(Action<int> updateProgress, Action<byte[]> onComplete)
+        private void GetEncryptionKey(ProgressUpdater progressUpdater, Action<byte[]> onComplete)
         {
             void GetByPassword()
             {
@@ -89,7 +89,7 @@ namespace CryptographicallySecureJournal.Forms
                 {
                     byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(password),
                         _journal.PassSalt);
-                    updateProgress(100);
+                    progressUpdater.Update(1);
                     onComplete(key);
                 }
             }
@@ -98,7 +98,8 @@ namespace CryptographicallySecureJournal.Forms
             {
                 int[] questionsIndexes = _journal.QuestionsIndexes;
                 SecurityQuestionsForm securityQuestionsForm = new SecurityQuestionsForm(
-                    $"Answer {EncryptedShare.MinimumNumberOfQuestions} out of 4 security" +
+                    $"Answer {ShamirSecretSharing.MinNumOfShares} out of {ShamirSecretSharing.TotalShares}" +
+                    $" security" +
                     $" questions (the 4th one will be ignored)", false, questionsIndexes, true);
                 if (securityQuestionsForm.ShowDialog() != DialogResult.OK || securityQuestionsForm.Result == null)
                 {
@@ -110,14 +111,15 @@ namespace CryptographicallySecureJournal.Forms
                 try
                 {
                     pass = EncryptedShare.RecoverKey(securityQuestions,
-                        _journal.EncryptedShares, updateProgress);
+                        _journal.EncryptedShares, _progressUpdater);
 
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"{ex.Message} - can't recover key, possible wrong answers to security" +
                                     $"questions", "Can't Recover Key", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    updateProgress(0);
+                    _progressUpdater.Update(0);
+
                     onComplete(null);
                     return;
                 }
@@ -149,25 +151,20 @@ namespace CryptographicallySecureJournal.Forms
         }
 
 
-        private void ChangePassword(byte[] key, string oldText, string newPass, Tuple<int, string>[] newSecurityQuestions,
-            Action<int> progress)
+        private void ChangePassword(string oldText, string newPass, Tuple<int, string>[] newSecurityQuestions,
+           ProgressUpdater progressUpdater)
         {
-
-
-            const int beforeUploadProgress = 50;
+            const double beforeUploadProgress = 0.50;
+            progressUpdater.Update(0);
             (Journal journal, byte[] _) = Journal.GenerateNewJournal(oldText,
-                newPass, newSecurityQuestions, val =>
-                { progress((int)(beforeUploadProgress / 100d * val)); });
-            UpdateJournal(journal, val =>
-            {
-                UpdateProgressBar((int)(val / 100d * (100 - beforeUploadProgress) + beforeUploadProgress));
-            });
+                newPass, newSecurityQuestions, new ProgressUpdater(progressUpdater, 0, beforeUploadProgress));
+            UpdateJournal(journal, new ProgressUpdater(progressUpdater, beforeUploadProgress, 1));
 
         }
 
-        private void UpdateJournal(Journal journal, Action<int> updateProgressBar)
+        private void UpdateJournal(Journal journal, ProgressUpdater progressUpdater)
         {
-            _driveManager.UploadJournal(journal, updateProgressBar, progress =>
+            _driveManager.UploadJournal(journal, progressUpdater, progress =>
            {
                if (JournalEditorForm.MsgBoxForFailedUpload(progress))
                {
@@ -177,10 +174,6 @@ namespace CryptographicallySecureJournal.Forms
                MessageBox.Show("Changed successfully", "Success", MessageBoxButtons.OK);
 
            });
-        }
-        private void UpdateProgressBar(int val)
-        {
-            progressBar.Invoke(new Action(() => progressBar.Value = val));
         }
 
         private void ResetSecQuestionsBtnClick(object sender, EventArgs e)
@@ -208,9 +201,9 @@ namespace CryptographicallySecureJournal.Forms
         private void ChangeSecurityQuestions(string password, Tuple<int, string>[] newSecurityQuestions)
         {
             byte[] key = HashAndSalt.Password(Encoding.UTF8.GetBytes(password), _journal.PassSalt);
-            const int afterHashProgress = 25;
-            const int beforeUploadProgress = 75;
-            UpdateProgressBar(afterHashProgress);
+            const double afterHashProgress = 0.25;
+            _progressUpdater.Update(afterHashProgress);
+            const double beforeUploadProgress = 0.75;
             string decryptedText;
             try
             {
@@ -226,15 +219,9 @@ namespace CryptographicallySecureJournal.Forms
 
             (Journal journal, byte[] _) =
                 Journal.GenerateNewJournal(decryptedText, password, newSecurityQuestions,
-                    value =>
-                    {
-                        UpdateProgressBar((int)((value / 100d) * (beforeUploadProgress - afterHashProgress) + afterHashProgress));
-                    });
-            UpdateProgressBar(beforeUploadProgress);
-            UpdateJournal(journal, value =>
-            {
-                UpdateProgressBar((int)(value / 100d * (100 - beforeUploadProgress) + beforeUploadProgress));
-            });
+                    new ProgressUpdater(_progressUpdater, afterHashProgress, beforeUploadProgress));
+            UpdateJournal(journal,
+                new ProgressUpdater(_progressUpdater, beforeUploadProgress, 1));
 
         }
 
@@ -295,7 +282,7 @@ namespace CryptographicallySecureJournal.Forms
             {
                 return;
             }
-            _driveManager.UploadBackup(_journal, fileName, UpdateProgressBar, progress =>
+            _driveManager.UploadBackup(_journal, fileName, _progressUpdater, progress =>
             {
                 if (JournalEditorForm.MsgBoxForFailedUpload(progress))
                 {
@@ -319,11 +306,11 @@ namespace CryptographicallySecureJournal.Forms
             {
                 if (task.Exception == null)
                 {
-                    UpdateProgressBar(100);
+                    _progressUpdater.Update(1);
                     _journal = null;
                     _owner.Journal = null;
                     _owner.SetEnabledOfJonControls(false);
-                    _owner.UpdateProgressBar(0);
+                    _owner.ProgressBar.Update(0);
                     this.CloseOnUIThread();
                 }
                 else

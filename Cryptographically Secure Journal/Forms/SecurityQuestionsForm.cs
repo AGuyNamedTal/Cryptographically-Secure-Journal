@@ -1,4 +1,5 @@
-﻿using CryptographicallySecureJournal.Properties;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Properties;
 using System;
 using System.Linq;
 using System.Windows.Forms;
@@ -59,7 +60,7 @@ namespace CryptographicallySecureJournal.Forms
                     secQuestion.Enabled = false;
                 }
 
-                _requiredAnswers = EncryptedShare.MinimumNumberOfQuestions;
+                _requiredAnswers = ShamirSecretSharing.MinNumOfShares;
             }
 
         }

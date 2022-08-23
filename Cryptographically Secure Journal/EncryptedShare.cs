@@ -1,17 +1,13 @@
-﻿using CryptographicallySecureJournal.Utils;
-using SecretSharingDotNet.Cryptography;
-using SecretSharingDotNet.Math;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Utils;
 using System;
 using System.IO;
-using System.Linq;
-using System.Numerics;
 using System.Text;
 
 namespace CryptographicallySecureJournal
 {
     public class EncryptedShare
     {
-        public const int MinimumNumberOfQuestions = 3;
 
         public byte QuestionIndex;
         public byte[] Share;
@@ -33,10 +29,10 @@ namespace CryptographicallySecureJournal
         }
 
         public static EncryptedShare[] CreateSecurityQuestions(Tuple<int, string>[] securityQuestions,
-            byte[] key, Action<int> progressBarUpdater)
+            byte[] key, ProgressUpdater progressUpdater)
         {
 
-            byte[][] split = SplitKey(key);
+            byte[][] split = ShamirSecretSharing.SplitSecret(key);
             byte[][] encryptedBytes = new byte[split.Length][];
             byte[][] salts = new byte[split.Length][];
             for (int i = 0; i < split.Length; i++)
@@ -46,7 +42,7 @@ namespace CryptographicallySecureJournal
                 salts[i] = salt;
                 byte[] shareKey = HashAndSalt.SecurityAnswer(message, salt);
                 encryptedBytes[i] = AesEncryption.Encrypt(split[i], shareKey);
-                progressBarUpdater((i + 1) * 100 / split.Length);
+                progressUpdater.Update((double)(i + 1) / split.Length);
             }
             EncryptedShare[] output = new EncryptedShare[split.Length];
             for (int i = 0; i < output.Length; i++)
@@ -57,11 +53,10 @@ namespace CryptographicallySecureJournal
             return output;
         }
 
-        public static byte[] RecoverKey(Tuple<int, string>[] securityQuestions, EncryptedShare[] encryptedShares, Action<int> progressBar)
+        public static byte[] RecoverKey(Tuple<int, string>[] securityQuestions, EncryptedShare[] encryptedShares,
+            ProgressUpdater progressUpdater)
         {
-            ExtendedEuclideanAlgorithm<BigInteger> gcd = new ExtendedEuclideanAlgorithm<BigInteger>();
-            ShamirsSecretSharing<BigInteger> combine = new ShamirsSecretSharing<BigInteger>(gcd);
-            FinitePoint<BigInteger>[] shares = new FinitePoint<BigInteger>[securityQuestions.Length];
+            (int, byte[])[] shares = new (int, byte[])[securityQuestions.Length];
             int currentShareIndex = 0;
             foreach (Tuple<int, string> tuple in securityQuestions)
             {
@@ -85,34 +80,16 @@ namespace CryptographicallySecureJournal
 
                 byte[] decryptedShare = AesEncryption.Decrypt(matchingShare.Share,
                     HashAndSalt.SecurityAnswer(Encoding.UTF8.GetBytes(answer), matchingShare.Salt));
-                shares[currentShareIndex] = new FinitePoint<BigInteger>(
-                    new BigIntCalculator(new BigInteger(shareX)),
-                    new BigIntCalculator(decryptedShare));
+                shares[currentShareIndex] = (shareX, decryptedShare);
                 currentShareIndex++;
-                progressBar(90 * shares.Length / currentShareIndex);
+                progressUpdater.Update(0.9d * currentShareIndex / shares.Length);
             }
 
-            byte[] key = combine.Reconstruction(shares).ToByteArray();
-
-            progressBar(100);
+            byte[] key = ShamirSecretSharing.ReconstructSecret(shares);
+            progressUpdater.Update(1);
             return key;
         }
 
-
-        private static byte[][] SplitKey(byte[] key)
-        {
-            ExtendedEuclideanAlgorithm<BigInteger> gcd = new ExtendedEuclideanAlgorithm<BigInteger>();
-            //// Create Shamir's Secret Sharing instance with BigInteger
-            ShamirsSecretSharing<BigInteger> split = new ShamirsSecretSharing<BigInteger>(gcd);
-
-            //// Minimum number of shared secrets for reconstruction: 4
-            //// Maximum number of shared secrets: 10
-            //// Attention: The password length changes the security level set by the ctor
-            Shares<BigInteger> shares = split.MakeShares(MinimumNumberOfQuestions, 4,
-                key, 15);
-
-            return shares.Select(point => point.Y.ByteRepresentation.ToArray()).ToArray();
-        }
 
         public void WriteToMemoryStream(MemoryStream memoryStream)
         {

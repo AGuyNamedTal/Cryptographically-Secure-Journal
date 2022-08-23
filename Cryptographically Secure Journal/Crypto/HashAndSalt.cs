@@ -2,7 +2,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace CryptographicallySecureJournal
+namespace CryptographicallySecureJournal.Crypto
 {
     internal static class HashAndSalt
     {

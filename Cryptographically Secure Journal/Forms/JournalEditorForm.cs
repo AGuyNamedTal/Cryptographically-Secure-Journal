@@ -1,4 +1,5 @@
-﻿using CryptographicallySecureJournal.Utils;
+﻿using CryptographicallySecureJournal.Crypto;
+using CryptographicallySecureJournal.Utils;
 using Google.Apis.Upload;
 using System;
 using System.Text;
@@ -71,7 +72,7 @@ namespace CryptographicallySecureJournal.Forms
             _journal.EncryptedText = AesEncryption.Encrypt(Encoding.UTF8.GetBytes(textToUpload),
                 _passHash);
 
-            _driveManager.UploadJournal(_journal, UpdateProgressBar, progress =>
+            _driveManager.UploadJournal(_journal, progressBar.Updater, progress =>
             {
                 bool failed = MsgBoxForFailedUpload(progress);
                 if (!failed)
