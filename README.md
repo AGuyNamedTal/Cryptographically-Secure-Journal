@@ -3,7 +3,7 @@ A Windows Forms application that connects to a user's Google Drive and stores th
 
 This project works as a proof-of-concept of how you can combine security questions for personal data recovery, using Secret Sharing (Shamir Secret Sharing). 
 
-###How it works:
+### How it works:
 
 The encrypted journal is just the plain text of the journal encypted with AES-GCM-256 with a key that is directly derived from the password.
 
@@ -18,4 +18,4 @@ Each share is encrypted with a key that is derived from an answer to a specific 
 
 The encrypted shares are then uploaded along with the encrypted journal and each share is correlated with the security question index.
 
-Thus you can recover the journal with both the password and answers to 3/4 security questions.
+#### Thus you can recover and edit the journal with both the password and answers to 3/4 security questions.
