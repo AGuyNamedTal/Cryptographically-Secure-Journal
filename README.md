@@ -5,17 +5,19 @@ This project works as a proof-of-concept of how you can combine security questio
 
 ### How it works:
 
-The encrypted journal is just the plain text of the journal encypted with AES-GCM-256 with a key that is directly derived from the password.
+* The encrypted journal is just the plain text of the journal encypted with AES-GCM-256 with a key that is directly derived from the password.
 
 
-The key is derived using Argon2 (which is used extensively throughout to derive all encryption keys).
+* The key is derived using Argon2 (which is used extensively throughout to derive all encryption keys).
 
-The user can also add additional security questions, which can be used to change the password.
+* The user can also add additional security questions, which can be used to change the password.
 
-When using security questions, the key is split using Shamir Secret Sharing into 4 shares (one per question), with a minimum of 3 shares required.
+* When using security questions, the key is split using Shamir Secret Sharing into 4 shares (one per question), with a minimum of 3 shares required.
 Each share is encrypted with a key that is derived from an answer to a specific security question.
 
 
-The encrypted shares are then uploaded along with the encrypted journal and each share is correlated with the security question index.
+* The encrypted shares are then uploaded along with the encrypted journal and each share is correlated with the security question index.
+
+* All data is manged directly on the user's Google Drive storage
 
 #### Thus you can recover and edit the journal with both the password and answers to 3/4 security questions.
